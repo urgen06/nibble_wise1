@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Recipes - SuperCook Clone{% endblock %}
+{% block content %}
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+	<div class="flex items-center justify-between gap-3">
+		<h2 class="text-2xl font-bold">Recipes</h2>
+		<div class="flex items-center gap-2">
+			<select id="sort-select" class="px-4 py-2 rounded-xl border border-gray-200 bg-white shadow-soft">
+				<option value="popularity">Most Popular</option>
+				<option value="time">Shortest Time</option>
+				<option value="difficulty">Difficulty</option>
+			</select>
+		</div>
+	</div>
+	<div id="recipe-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+		{% for r in recipes %}
+			{% include 'components/recipe_card.html' with slug=r.slug title=r.title time=r.time difficulty=r.difficulty image=r.image %}
+		{% empty %}
+			{% include 'components/empty_state.html' %}
+		{% endfor %}
+	</div>
+</section>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Home - SuperCook Clone{% endblock %}
+{% block content %}
+<section class="bg-gradient-to-b from-green-50 to-white">
+	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+		<div class="grid md:grid-cols-2 gap-10 items-center">
+			<div>
+				<h1 class="text-4xl sm:text-5xl font-extrabold leading-tight">Cook Smart. <span class="text-brand">Waste Less.</span></h1>
+				<p class="mt-4 text-gray-600">Discover recipes based on ingredients you already have at home.</p>
+				<div class="mt-6">
+					{% include 'components/search_bar.html' %}
+				</div>
+				<div class="mt-6">
+					<a href="{% url 'ingredients' %}" class="inline-flex items-center px-5 py-3 rounded-xl bg-brand text-white font-medium shadow-soft hover:opacity-95">Start Cooking</a>
+				</div>
+			</div>
+			<div class="grid grid-cols-2 gap-4">
+				{% for ingredient in ingredients %}
+					{% include 'components/ingredient_card.html' with name=ingredient.name category=ingredient.category image=ingredient.image %}
+				{% endfor %}
+			</div>
+		</div>
+	</div>
+</section>
+{% endblock %}

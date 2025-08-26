@@ -1,0 +1,13 @@
+{% load static %}
+<div class="ingredient-card group cursor-pointer rounded-xl bg-white shadow-soft hover:shadow-lg transition-shadow duration-200 overflow-hidden" data-name="{{ name }}" data-category="{{ category }}">
+	<div class="relative">
+		<img src="{% static image %}" alt="{{ name }}" class="h-36 w-full object-cover transform group-hover:scale-[1.03] transition-transform duration-200" onerror="this.onerror=null;this.src='{% static 'images/empty.svg' %}'"/>
+		<input type="checkbox" class="absolute top-3 left-3 h-5 w-5 rounded border-gray-300 text-brand focus:ring-brand ingredient-checkbox" />
+	</div>
+	<div class="p-4">
+		<div class="flex items-center justify-between">
+			<h3 class="font-semibold">{{ name }}</h3>
+			<span class="text-xs px-2 py-1 rounded-full bg-green-50 text-brand border border-green-100">{{ category }}</span>
+		</div>
+	</div>
+</div>

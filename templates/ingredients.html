@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Ingredients - SuperCook Clone{% endblock %}
+{% block content %}
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+	<div class="grid lg:grid-cols-4 gap-8">
+		<div class="lg:col-span-3 space-y-6">
+			<div class="flex items-center gap-3">
+				<div class="flex-1">{% include 'components/search_bar.html' %}</div>
+				<select id="category-filter" class="px-4 py-3 rounded-xl border border-gray-200 bg-white shadow-soft">
+					<option value="">All Categories</option>
+					{% for c in categories %}
+					<option value="{{ c }}">{{ c }}</option>
+					{% endfor %}
+				</select>
+			</div>
+			<div id="ingredient-grid" class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+				{% for ingredient in ingredients %}
+					{% include 'components/ingredient_card.html' with name=ingredient.name category=ingredient.category image=ingredient.image %}
+				{% endfor %}
+			</div>
+		</div>
+		<aside class="lg:col-span-1 lg:sticky lg:top-20 h-fit">
+			<div class="bg-white rounded-xl shadow-soft p-4 space-y-3">
+				<h3 class="font-semibold">Selected Ingredients</h3>
+				<ul id="selected-list" class="text-sm text-gray-700 space-y-1"></ul>
+				<a href="{% url 'recipes' %}" class="mt-3 inline-flex items-center justify-center w-full px-4 py-2 rounded-lg bg-brand text-white font-medium disabled:opacity-50" id="find-recipes">Find Recipes</a>
+			</div>
+		</aside>
+	</div>
+</section>
+{% endblock %}

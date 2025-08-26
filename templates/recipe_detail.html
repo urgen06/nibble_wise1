@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ recipe.title }} - SuperCook Clone{% endblock %}
+{% block content %}
+<section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+	<div class="bg-white rounded-xl shadow-soft overflow-hidden">
+		<img src="{% static recipe.image %}" alt="{{ recipe.title }}" class="h-64 w-full object-cover"/>
+		<div class="p-6 space-y-4">
+			<h1 class="text-2xl font-bold">{{ recipe.title }}</h1>
+			<div class="flex items-center gap-4 text-sm text-gray-600">
+				<span>{{ recipe.time }} mins</span>
+				<span>{{ recipe.difficulty }}</span>
+			</div>
+			<div>
+				<h3 class="font-semibold mb-2">Ingredients</h3>
+				<ul class="list-disc list-inside text-gray-700">
+					{% for i in recipe.ingredients %}
+					<li>{{ i }}</li>
+					{% endfor %}
+				</ul>
+			</div>
+			<div>
+				<h3 class="font-semibold mb-2">Steps</h3>
+				<ol class="list-decimal list-inside text-gray-700 space-y-1">
+					{% for s in recipe.steps %}
+					<li>{{ s }}</li>
+					{% endfor %}
+				</ol>
+			</div>
+		</div>
+	</div>
+</section>
+{% endblock %}
