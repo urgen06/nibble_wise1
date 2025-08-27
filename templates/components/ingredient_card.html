@@ -4,7 +4,7 @@
      data-category="{{ ingredient.category }}">
      
     <div class="relative">
-        <img src="{% static ingredient.image %}" 
+        <img src="{{ ingredient.image.url}}" 
              alt="{{ ingredient.name }}" 
              class="h-36 w-full object-cover transform group-hover:scale-[1.03] transition-transform duration-200" 
              onerror="this.onerror=null;this.src='{% static 'images/empty.svg' %}'"/>

@@ -1,8 +1,9 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from .models import Category,Ingredient,Recipe
 
 
 # ------------------- Signup -------------------
@@ -58,66 +59,52 @@ def home(request):
 # ------------------- Ingredients Page -------------------
 @login_required(login_url='login')
 def ingredients(request):
-    ingredients = [
-        {"name": "Tomato", "category": "Vegetable", "image": "images/tomato.jpg"},
-        {"name": "Onion", "category": "Vegetable", "image": "images/onion.jpg"},
-        {"name": "Egg", "category": "Protein", "image": "images/egg.jpg"},
-        {"name": "Milk", "category": "Dairy", "image": "images/milk.jpg"},
-        {"name": "Chicken", "category": "Protein", "image": "images/chicken.jpg"},
-        {"name": "Spinach", "category": "Vegetable", "image": "images/spinach.jpg"},
-        {"name": "Cheese", "category": "Dairy", "image": "images/cheese.jpg"},
-        {"name": "Garlic", "category": "Vegetable", "image": "images/garlic.jpg"},
-    ]
-    categories = sorted({i["category"] for i in ingredients})
-    return render(request, 'ingredients.html', {"ingredients": ingredients, "categories": categories})
+    
+    ingredients = Ingredient.objects.select_related('category').all()
+
+    categories = Category.objects.all().order_by('name')
+
+    return render(request, 'ingredients.html', {
+        "ingredients": ingredients,
+        "categories": categories
+    })
 
 # ------------------- Recipes Page -------------------
 @login_required(login_url='login')
 def recipes(request):
-    recipes = [
-        {
-            "slug": "tomato-omelette",
-            "title": "Tomato Omelette",
-            "time": 15,
-            "difficulty": "Easy",
-            "popularity": 87,
-            "image": "images/recipe1.jpg",
-        },
-        {
-            "slug": "creamy-garlic-chicken",
-            "title": "Creamy Garlic Chicken",
-            "time": 35,
-            "difficulty": "Medium",
-            "popularity": 95,
-            "image": "images/recipe2.jpg",
-        },
-        {
-            "slug": "spinach-cheese-quiche",
-            "title": "Spinach & Cheese Quiche",
-            "time": 50,
-            "difficulty": "Hard",
-            "popularity": 72,
-            "image": "images/recipe3.jpg",
-        },
-    ]
+    recipes = Recipe.objects.all()
+    # recipes = [
+    #     {
+    #         "slug": "tomato-omelette",
+    #         "title": "Tomato Omelette",
+    #         "time": 15,
+    #         "difficulty": "Easy",
+    #         "popularity": 87,
+    #         "image": "images/recipe1.jpg",
+    #     },
+    #     {
+    #         "slug": "creamy-garlic-chicken",
+    #         "title": "Creamy Garlic Chicken",
+    #         "time": 35,
+    #         "difficulty": "Medium",
+    #         "popularity": 95,
+    #         "image": "images/recipe2.jpg",
+    #     },
+    #     {
+    #         "slug": "spinach-cheese-quiche",
+    #         "title": "Spinach & Cheese Quiche",
+    #         "time": 50,
+    #         "difficulty": "Hard",
+    #         "popularity": 72,
+    #         "image": "images/recipe3.jpg",
+    #     },
+    # ]
     return render(request, 'recipes.html', {"recipes": recipes})
 
 # ------------------- Recipe Detail -------------------
 @login_required(login_url='login')
 def recipe_detail(request, slug):
-    recipe = {
-        "slug": slug,
-        "title": slug.replace('-', ' ').title(),
-        "time": 30,
-        "difficulty": "Medium",
-        "image": "images/recipe1.jpg",
-        "ingredients": ["Tomato", "Egg", "Onion", "Garlic"],
-        "steps": [
-            "Chop ingredients.",
-            "Heat pan and cook.",
-            "Serve hot.",
-        ],
-    }
+    recipe = get_object_or_404(Recipe, slug=slug)
     return render(request, 'recipe_detail.html', {"recipe": recipe})
 
 # ------------------- About -------------------

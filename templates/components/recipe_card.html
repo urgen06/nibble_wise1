@@ -1,11 +1,32 @@
 {% load static %}
-<a href="{% url 'recipe_detail' slug=slug %}" class="block group rounded-xl bg-white shadow-soft hover:shadow-lg transition-all duration-200 overflow-hidden recipe-card">
-	<img src="{% static image %}" alt="{{ title }}" class="h-40 w-full object-cover group-hover:scale-[1.03] transition-transform duration-200" onerror="this.onerror=null;this.src='{% static 'images/empty.svg' %}'"/>
-	<div class="p-4 space-y-2">
-		<h3 class="font-semibold text-lg group-hover:text-brand">{{ title }}</h3>
-		<div class="flex items-center gap-3 text-sm text-gray-600">
-			<span class="inline-flex items-center gap-1"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2"/></svg> {{ time }} mins</span>
-			<span class="inline-flex items-center gap-1"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.5 0-3 1.5-3 3s1.5 3 3 3 3-1.5 3-3-1.5-3-3-3z"/></svg> {{ difficulty }}</span>
-		</div>
-	</div>
+<a href="{% url 'recipe_detail' slug=r.slug %}" class="block group rounded-xl bg-white shadow-soft hover:shadow-lg transition-all duration-200 overflow-hidden recipe-card">
+    {% if r.photo1 %}
+        <img src="{{ r.photo1.url }}" alt="{{ r.title }}" class="h-40 w-full object-cover group-hover:scale-[1.03] transition-transform duration-200" onerror="this.onerror=null;this.src='{% static 'images/empty.svg' %}'"/>
+    {% elif r.photo2 %}
+        <img src="{{ r.photo2.url }}" alt="{{ r.title }}" class="h-40 w-full object-cover group-hover:scale-[1.03] transition-transform duration-200" onerror="this.onerror=null;this.src='{% static 'images/empty.svg' %}'"/>
+    {% elif r.photo3 %}
+        <img src="{{ r.photo3.url }}" alt="{{ r.title }}" class="h-40 w-full object-cover group-hover:scale-[1.03] transition-transform duration-200" onerror="this.onerror=null;this.src='{% static 'images/empty.svg' %}'"/>
+    {% elif r.photo4 %}
+        <img src="{{ r.photo4.url }}" alt="{{ r.title }}" class="h-40 w-full object-cover group-hover:scale-[1.03] transition-transform duration-200" onerror="this.onerror=null;this.src='{% static 'images/empty.svg' %}'"/>
+    {% elif r.photo5 %}
+        <img src="{{ r.photo5.url }}" alt="{{ r.title }}" class="h-40 w-full object-cover group-hover:scale-[1.03] transition-transform duration-200" onerror="this.onerror=null;this.src='{% static 'images/empty.svg' %}'"/>
+    {% else %}
+        <img src="{% static 'images/empty.svg' %}" alt="{{ r.title }}" class="h-40 w-full object-cover"/>
+    {% endif %}
+
+    <div class="p-4 space-y-2">
+        <h3 class="font-semibold text-lg group-hover:text-brand">{{ r.title }}</h3>
+        <div class="flex items-center gap-3 text-sm text-gray-600">
+            <span class="inline-flex items-center gap-1">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2"/>
+                </svg> {{ r.time }} mins
+            </span>
+            <span class="inline-flex items-center gap-1">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.5 0-3 1.5-3 3s1.5 3 3 3 3-1.5 3-3-1.5-3-3-3z"/>
+                </svg> {{ r.difficulty }}
+            </span>
+        </div>
+    </div>
 </a>
