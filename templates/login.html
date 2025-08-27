@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login | SuperCook</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes fadeInUp {
+            0% { opacity: 0; transform: translateY(8px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in-up { animation: fadeInUp 300ms ease-out both; }
+    </style>
+</head>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen">
+    <div class="fade-in-up bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+        <h2 class="text-2xl font-semibold mb-6 text-center">Login to SuperCook</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Username</label>
+                <input type="text" name="username" placeholder="Enter username" required
+                       class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Password</label>
+                <input type="password" name="password" placeholder="Enter password" required
+                       class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand">
+            </div>
+            <button type="submit"
+                    class="w-full py-2 bg-brand text-white font-semibold rounded-lg hover:bg-brand-dark transition">
+                Login
+            </button>
+        </form>
+
+        <p class="mt-4 text-center text-sm">
+            Don't have an account? 
+            <a href="{% url 'signup' %}" class="text-brand font-medium hover:underline">Sign Up</a>
+        </p>
+
+        {% if messages %}
+            <div class="mt-4">
+                {% for message in messages %}
+                    <p class="text-red-500 text-sm">{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- JS -->
+    <script src="{% static 'js/app.js' %}"></script>
+</body>
+</html>

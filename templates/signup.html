@@ -1,0 +1,63 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign Up | SuperCook</title>
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes fadeInUp {
+            0% { opacity: 0; transform: translateY(8px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in-up { animation: fadeInUp 300ms ease-out both; }
+    </style>
+</head>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen">
+    <div class="fade-in-up bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+        <h2 class="text-2xl font-semibold mb-6 text-center">Create Your Account</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Username</label>
+                <input type="text" name="username" placeholder="Enter username" required
+                       class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Email</label>
+                <input type="email" name="email" placeholder="Enter email" required
+                       class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Password</label>
+                <input type="password" name="password1" placeholder="Enter password" required
+                       class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-medium mb-1">Confirm Password</label>
+                <input type="password" name="password2" placeholder="Confirm password" required
+                       class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <button type="submit"
+                    class="w-full py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition">
+                Sign Up
+            </button>
+        </form>
+        <p class="mt-4 text-center text-sm">
+            Already have an account? <a href="{% url 'login' %}" class="text-blue-500 font-medium hover:underline">Login</a>
+        </p>
+
+        {% if messages %}
+            <div class="mt-4">
+                {% for message in messages %}
+                    <p class="text-red-500 text-sm">{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- JS -->
+    <script src="{% static 'js/app.js' %}"></script>
+</body>
+</html>
