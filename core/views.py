@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+
 
 # ------------------- Signup -------------------
 def signup_view(request):
@@ -54,6 +56,7 @@ def home(request):
     return render(request, 'home.html', {"ingredients": ingredients})
 
 # ------------------- Ingredients Page -------------------
+@login_required(login_url='login')
 def ingredients(request):
     ingredients = [
         {"name": "Tomato", "category": "Vegetable", "image": "images/tomato.jpg"},
@@ -69,6 +72,7 @@ def ingredients(request):
     return render(request, 'ingredients.html', {"ingredients": ingredients, "categories": categories})
 
 # ------------------- Recipes Page -------------------
+@login_required(login_url='login')
 def recipes(request):
     recipes = [
         {
@@ -99,6 +103,7 @@ def recipes(request):
     return render(request, 'recipes.html', {"recipes": recipes})
 
 # ------------------- Recipe Detail -------------------
+@login_required(login_url='login')
 def recipe_detail(request, slug):
     recipe = {
         "slug": slug,
