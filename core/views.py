@@ -5,6 +5,92 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .models import Category,Ingredient,Recipe
 
+from django.db.models import Q
+import requests
+from django.http import JsonResponse
+from urllib.parse import quote
+
+
+@login_required(login_url='login')
+def api_recipe_detail(request, title):
+    API_KEY = "F5kjAeW8WuQIvS2b8tF7oA==fjAB5c17MRec7i2q"
+    query = quote(title)
+    url = f"https://api.api-ninjas.com/v1/recipe?query={query}"
+    headers = {"X-Api-Key": API_KEY}
+
+    recipe = {}
+    ingredients_list = []
+
+    try:
+        response = requests.get(url, headers=headers, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            if data:
+                recipe = data[0]
+                ingredients_list = recipe.get("ingredients", "").split("|") if recipe.get("ingredients") else []
+        else:
+            print("API Error:", response.status_code, response.text)
+    except requests.RequestException as e:
+        print("Request Exception:", e)
+
+    return render(request, "api_recipe_detail.html", {
+        "recipe": recipe,
+        "ingredients_list": ingredients_list
+    })
+
+
+@login_required(login_url='login')
+def suggest_recipes(request):
+    query = request.GET.get('q', '').strip()
+
+    if not query:
+        return JsonResponse({"error": "Please enter at least one ingredient."}, status=400)
+
+    # ------------------- DB Recipes -------------------
+    db_recipes = Recipe.objects.filter(
+        ingredients__name__icontains=query
+    ).distinct()
+
+    db_results = []
+    for r in db_recipes:
+        db_results.append({
+            "title": r.title,
+            "slug": r.slug,
+            "time": r.time,
+            "difficulty": r.difficulty,
+            "photos": [p.url for p in r.photos()]  # using your photos() helper
+        })
+
+    # ------------------- API Recipes -------------------
+    API_KEY = "F5kjAeW8WuQIvS2b8tF7oA==fjAB5c17MRec7i2q" 
+    url = f"https://api.api-ninjas.com/v1/recipe?query={query}"
+    headers = {"X-Api-Key": API_KEY}
+
+    api_results = []
+    try:
+        response = requests.get(url, headers=headers, timeout=5)
+        
+        print("Status:", response.status_code)
+        print(response.json())
+
+        if response.status_code == 200:
+            data = response.json()
+            for r in data:
+                api_results.append({
+                    "title": r.get("title", "No Title"),
+                    "ingredients": r.get("ingredients", "No ingredients provided."),
+                    "instructions": r.get("instructions", "No instructions provided.")
+                })
+    except requests.RequestException:
+        pass
+
+    # ------------------- Combine -------------------
+    combined_results = {
+        "db_recipes": db_results,
+        "api_recipes": api_results
+    }
+
+    return JsonResponse(combined_results, safe=False)
 
 # ------------------- Signup -------------------
 def signup_view(request):

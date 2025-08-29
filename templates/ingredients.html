@@ -3,56 +3,129 @@
 {% block title %}Ingredients - SuperCook Clone{% endblock %}
 {% block content %}
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-	<div class="grid lg:grid-cols-4 gap-8">
-		<div class="lg:col-span-3 space-y-6">
-			<div class="flex items-center gap-3">
-				<div class="flex-1">{% include 'components/search_bar.html' %}</div>
-				<select id="category-filter" class="px-4 py-3 rounded-xl border border-gray-200 bg-white shadow-soft">
-					<option value="">All Categories</option>
-					{% for c in categories %}
-					<option value="{{ c }}">{{ c }}</option>
-					{% endfor %}
-				</select>
-			</div>
-			<div id="ingredient-grid" class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-				{% for ingredient in ingredients %}
-					{% include 'components/ingredient_card.html' with ingredient=ingredient %}
-				{% endfor %}
-			</div>
-		</div>
-		<aside class="lg:col-span-1 lg:sticky lg:top-20 h-fit">
-			<div class="bg-white rounded-xl shadow-soft p-4 space-y-3">
-				<h3 class="font-semibold">Selected Ingredients</h3>
-				<ul id="selected-list" class="text-sm text-gray-700 space-y-1"></ul>
+    <div class="grid lg:grid-cols-4 gap-8">
+        <!-- Ingredient selection -->
+        <div class="lg:col-span-3 space-y-6">
+            <div class="flex items-center gap-3">
+                <div class="flex-1">{% include 'components/search_bar.html' %}</div>
+                <select id="category-filter" class="px-4 py-3 rounded-xl border border-gray-200 bg-white shadow-soft">
+                    <option value="">All Categories</option>
+                    {% for c in categories %}
+                    <option value="{{ c }}">{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-				{% if user.is_authenticated %}
-    <a href="{% url 'recipes' %}" 
-       class="mt-3 inline-flex items-center justify-center w-full px-4 py-2 rounded-lg bg-brand text-white font-medium" 
-       id="find-recipes">
-        Find Recipes
-    </a>
-{% else %}
-    <a href="javascript:void(0);" 
-       class="mt-3 inline-flex items-center justify-center w-full px-4 py-2 rounded-lg bg-gray-400 text-white font-medium" 
-       id="find-recipes-guest">
-        Find Recipes
-    </a>
-{% endif %}
+            <div id="ingredient-grid" class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {% for ingredient in ingredients %}
+                {% include 'components/ingredient_card.html' with ingredient=ingredient %}
+                {% endfor %}
+            </div>
 
+            <!-- Suggested recipes -->
+            <div class="mt-10">
+                <h2 class="text-xl font-bold mb-4">Suggested Recipes</h2>
+                <div id="recipe-results" class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <!-- DB + API recipes will appear here -->
+                </div>
+            </div>
+        </div>
 
-			</div>
-		</aside>
+        <!-- Sidebar -->
+        <aside class="lg:col-span-1 lg:sticky lg:top-20 h-fit">
+            <div class="bg-white rounded-xl shadow-soft p-4 space-y-3">
+                <h3 class="font-semibold">Selected Ingredients</h3>
+                <ul id="selected-list" class="text-sm text-gray-700 space-y-1"></ul>
 
-	</div>
+                {% if user.is_authenticated %}
+                <a href="javascript:void(0);"
+                   class="mt-3 inline-flex items-center justify-center w-full px-4 py-2 rounded-lg bg-brand text-white font-medium"
+                   id="find-recipes">
+                   Find Recipes
+                </a>
+                {% else %}
+                <a href="javascript:void(0);"
+                   class="mt-3 inline-flex items-center justify-center w-full px-4 py-2 rounded-lg bg-gray-400 text-white font-medium"
+                   id="find-recipes-guest">
+                   Find Recipes
+                </a>
+                {% endif %}
+            </div>
+        </aside>
+    </div>
 </section>
-<script>
-    const guestBtn = document.getElementById('find-recipes-guest');
-    if (guestBtn) {
-        guestBtn.addEventListener('click', function() {
-            alert("You must login to access this feature!");
-            window.location.href = "{% url 'login' %}";
-        });
-    }
-</script>
 
+<script>
+const findBtn = document.getElementById('find-recipes');
+if(findBtn){
+    findBtn.addEventListener('click', async () => {
+        // Gather selected ingredients
+        const selected = Array.from(document.querySelectorAll('#selected-list li'))
+                              .map(li => li.textContent.trim())
+                              .join(',');
+        if(!selected){
+            alert("Please select at least one ingredient.");
+            return;
+        }
+
+        try {
+            const response = await fetch(`/suggest_recipes?q=${selected}`);
+            const data = await response.json();
+            console.log(data); // DB + API recipes
+
+            const container = document.getElementById('recipe-results');
+            container.innerHTML = ''; // clear previous results
+
+            // ------------------ DB Recipes ------------------
+            if(data.db_recipes.length){
+                data.db_recipes.forEach(r => {
+                    const div = document.createElement('div');
+                    div.className = "bg-white rounded-xl shadow p-4";
+                    div.innerHTML = `
+                        <a href="/recipes/${r.slug}/" class="block">
+                            <img src="${r.photos.length ? r.photos[0] : '/static/images/empty.svg'}" class="h-40 w-full object-cover rounded-lg mb-2">
+                            <h3 class="font-semibold text-lg">${r.title}</h3>
+                            <div class="text-sm text-gray-600">${r.time} mins | ${r.difficulty}</div>
+                        </a>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+
+            // ------------------ API Recipes ------------------
+            if(data.api_recipes.length){
+                data.api_recipes.forEach((r, idx) => {
+                    const div = document.createElement('div');
+                    div.className = "bg-white rounded-xl shadow p-4";
+                    div.innerHTML = `
+                        <a href="/api_recipe/${encodeURIComponent(r.title)}/" class="block">
+                            <img src="/static/images/empty.svg" class="h-40 w-full object-cover rounded-lg mb-2">
+                            <h3 class="font-semibold text-lg">${r.title}</h3>
+                            <div class="text-sm text-gray-600">API Recipe</div>
+                        </a>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+
+            if(data.db_recipes.length === 0 && data.api_recipes.length === 0){
+                container.innerHTML = "<p>No recipes found for selected ingredients.</p>";
+            }
+
+        } catch(err){
+            console.error(err);
+            alert("Error fetching recipes");
+        }
+    });
+}
+
+// Guest user redirect
+const guestBtn = document.getElementById('find-recipes-guest');
+if (guestBtn) {
+    guestBtn.addEventListener('click', function () {
+        alert("You must login to access this feature!");
+        window.location.href = "{% url 'login' %}";
+    });
+}
+</script>
 {% endblock %}
