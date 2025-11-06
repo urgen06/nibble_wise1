@@ -47,6 +47,20 @@
     </div>
 </section>
 
+<h2 class="text-xl font-bold mt-8 mb-4">You may also like</h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  {% for r in similar_recipes %}
+  <div class="p-4 bg-white rounded-lg shadow">
+    <a href="{% url 'recipe_detail' r.slug %}">
+      <h3 class="font-semibold">{{ r.title }}</h3>
+      <p class="text-sm text-gray-600">{{ r.difficulty }} | {{ r.time }} mins</p>
+    </a>
+  </div>
+  {% empty %}
+  <p>No similar recipes found.</p>
+  {% endfor %}
+</div>
+
 <script>
 const slides = document.querySelectorAll('.slide');
 let current = 0;

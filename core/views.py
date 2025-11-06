@@ -10,6 +10,12 @@ import requests
 from django.http import JsonResponse
 from urllib.parse import quote
 
+from .recommendations import content_based_recipes, collaborative_recipes
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+
 
 @login_required(login_url='login')
 def api_recipe_detail(request, title):
@@ -41,56 +47,197 @@ def api_recipe_detail(request, title):
 
 @login_required(login_url='login')
 def suggest_recipes(request):
-    query = request.GET.get('q', '').strip()
+    # 1️⃣ Get ingredients from ?ingredients=... or ?q=...
+    ingredients_list = request.GET.getlist('ingredients')
+    if not ingredients_list:
+        q = request.GET.get('q', '').strip()
+        if q:
+            # Split by comma or space
+            ingredients_list = [i.strip() for i in q.replace(',', ' ').split()]
 
-    if not query:
-        return JsonResponse({"error": "Please enter at least one ingredient."}, status=400)
+    if not ingredients_list:
+        return JsonResponse({"error": "Please select at least one ingredient."}, status=400)
 
-    # ------------------- DB Recipes -------------------
-    db_recipes = Recipe.objects.filter(
-        ingredients__name__icontains=query
-    ).distinct()
+    # 2️⃣ Build OR query for all ingredients
+    query = Q()
+    for ing in ingredients_list:
+        query |= Q(ingredients__name__icontains=ing)
 
-    db_results = []
-    for r in db_recipes:
-        db_results.append({
-            "title": r.title,
-            "slug": r.slug,
-            "time": r.time,
-            "difficulty": r.difficulty,
-            "photos": [p.url for p in r.photos()]  # using your photos() helper
-        })
+    db_recipes = Recipe.objects.filter(query).distinct()
+
+    # 3️⃣ Prepare DB recipes result
+    db_results = [{
+        "title": r.title,
+        "slug": r.slug,
+        "time": r.time,
+        "difficulty": r.difficulty,
+        "photos": [p.url for p in getattr(r, 'photos', lambda: [])()]
+    } for r in db_recipes]
+
+    # 4️⃣ Content-based and collaborative recommendations
+    content_results = content_based_recipes(ingredients_list)
+    collaborative_results = collaborative_recipes(request.user)
+
+    # 5️⃣ Print debug info before returning
+    print("DB:", db_results)
+    print("Content-Based:", content_results)
+    print("Collaborative:", collaborative_results)
+
+    # 6️⃣ Add sample data if missing (for testing)
+    if not content_results:
+        content_results = [
+        {"slug": "sample-content", "title": "Sample Content Recipe"}
+    ]
+
+    if not collaborative_results:
+        collaborative_results = [
+        {"slug": "sample-collab", "title": "Sample Collaborative Recipe"}
+    ]
+
+    # 7️⃣ Finally, return the JSON response
+    return JsonResponse({
+        "db_recipes": db_results,
+        "content_based": content_results,
+        "collaborative": collaborative_results
+    }, safe=False)
+
+
+
+@login_required(login_url='login')
+def recipe_detail(request, slug):
+    recipe = get_object_or_404(Recipe, slug=slug)
+    all_recipes = Recipe.objects.exclude(id=recipe.id)
+    
+    # ✅ Get similar recipes
+    similar_recipes = get_similar_recipes(recipe, all_recipes)
+
+    return render(request, 'recipe_detail.html', {
+        "recipe": recipe,
+        "similar_recipes": similar_recipes
+    })
+
+
+# -------- Content based filtering--------
+def get_similar_recipes(target_recipe, all_recipes):
+    # Convert QuerySet to list so it supports indexing
+    all_recipes = list(all_recipes)
+
+    # Convert ingredient objects into plain text
+    def join_ingredients(recipe):
+        return " ".join(i.name for i in recipe.ingredients.all())
+
+    # Prepare TF-IDF corpus
+    corpus = [join_ingredients(r) for r in all_recipes]
+    vectorizer = TfidfVectorizer(stop_words='english')
+    tfidf_matrix = vectorizer.fit_transform(corpus)
+
+    # Target recipe vector
+    target_vec = vectorizer.transform([join_ingredients(target_recipe)])
+    cosine_sim = cosine_similarity(target_vec, tfidf_matrix).flatten()
+
+    # Get top similar recipes (highest similarity scores)
+    top_indices = cosine_sim.argsort()[-5:][::-1]
+
+    # ✅ Convert NumPy int64 indices to Python int and ensure unique recipe
+    similar_recipes = [
+        all_recipes[int(i)] for i in top_indices
+        if all_recipes[int(i)].id != target_recipe.id
+    ]
+    return similar_recipes[:5]
+
+
+def join_ingredients(recipe):
+    return f"{recipe.title} " + " ".join(i.name for i in recipe.ingredients.all())
+
+# @login_required(login_url='login')
+# def suggest_recipes(request):
+#     query = request.GET.get('q', '').strip()
+
+#     if not query:
+#         return JsonResponse({"error": "Please enter at least one ingredient."}, status=400)
+
+#     # ------------------- DB Recipes -------------------
+#     db_recipes = Recipe.objects.filter(
+#         ingredients__name__icontains=query
+#     ).distinct()
+
+#     db_results = []
+#     for r in db_recipes:
+#         db_results.append({
+#             "title": r.title,
+#             "slug": r.slug,
+#             "time": r.time,
+#             "difficulty": r.difficulty,
+#             "photos": [p.url for p in r.photos()]  # using your photos() helper
+#         })
+
+# @login_required(login_url='login')
+# def suggest_recipes(request):
+#     # 1️⃣ Get ingredients from GET parameters
+#     # Supports ?ingredients=Tomato&ingredients=Onion
+#     ingredients_query = request.GET.getlist('ingredients')
+
+#     # Or supports ?q=Tomato,Onion (comma or space separated)
+#     if not ingredients_query:
+#         q = request.GET.get('q', '').strip()
+#         if q:
+#             # Replace commas with spaces, then split by space
+#             ingredients_query = [i.strip() for i in q.replace(',', ' ').split() if i.strip()]
+
+#     if not ingredients_query:
+#         return JsonResponse({"error": "Please select at least one ingredient."}, status=400)
+
+#     # 2️⃣ Filter recipes containing ALL selected ingredients
+#     db_recipes = Recipe.objects.all()
+#     for ingredient_name in ingredients_query:
+#         db_recipes = db_recipes.filter(ingredients__name__icontains=ingredient_name)
+#     db_recipes = db_recipes.distinct()
+
+#     # 3️⃣ Prepare JSON response
+#     db_results = []
+#     for r in db_recipes:
+#         db_results.append({
+#             "title": r.title,
+#             "slug": r.slug,
+#             "time": r.time,
+#             "difficulty": r.difficulty,
+#             "photos": [p.url for p in getattr(r, 'photos', lambda: [])()]  # safe fallback
+#         })
+
+#     return JsonResponse({"db_recipes": db_results}, safe=False)
+
+
 
     # ------------------- API Recipes -------------------
-    API_KEY = "F5kjAeW8WuQIvS2b8tF7oA==fjAB5c17MRec7i2q" 
-    url = f"https://api.api-ninjas.com/v1/recipe?query={query}"
-    headers = {"X-Api-Key": API_KEY}
+    # API_KEY = "F5kjAeW8WuQIvS2b8tF7oA==fjAB5c17MRec7i2q" 
+    # url = f"https://api.api-ninjas.com/v1/recipe?query={query}"
+    # headers = {"X-Api-Key": API_KEY}
 
-    api_results = []
-    try:
-        response = requests.get(url, headers=headers, timeout=5)
+    # api_results = []
+    # try:
+    #     response = requests.get(url, headers=headers, timeout=5)
         
-        print("Status:", response.status_code)
-        print(response.json())
+    #     print("Status:", response.status_code)
+    #     print(response.json())
 
-        if response.status_code == 200:
-            data = response.json()
-            for r in data:
-                api_results.append({
-                    "title": r.get("title", "No Title"),
-                    "ingredients": r.get("ingredients", "No ingredients provided."),
-                    "instructions": r.get("instructions", "No instructions provided.")
-                })
-    except requests.RequestException:
-        pass
+    #     if response.status_code == 200:
+    #         data = response.json()
+    #         for r in data:
+    #             api_results.append({
+    #                 "title": r.get("title", "No Title"),
+    #                 "ingredients": r.get("ingredients", "No ingredients provided."),
+    #                 "instructions": r.get("instructions", "No instructions provided.")
+    #             })
+    # except requests.RequestException:
+    #     pass
 
-    # ------------------- Combine -------------------
-    combined_results = {
-        "db_recipes": db_results,
-        "api_recipes": api_results
-    }
+    # # ------------------- Combine -------------------
+    # combined_results = {
+    #     "db_recipes": db_results,
+    #     "api_recipes": api_results
+    # }
 
-    return JsonResponse(combined_results, safe=False)
+    # return JsonResponse(combined_results, safe=False)
 
 # ------------------- Signup -------------------
 def signup_view(request):
@@ -187,12 +334,9 @@ def recipes(request):
     # ]
     return render(request, 'recipes.html', {"recipes": recipes})
 
-# ------------------- Recipe Detail -------------------
-@login_required(login_url='login')
-def recipe_detail(request, slug):
-    recipe = get_object_or_404(Recipe, slug=slug)
-    return render(request, 'recipe_detail.html', {"recipe": recipe})
 
 # ------------------- About -------------------
 def about(request):
     return render(request, 'about.html')
+
+

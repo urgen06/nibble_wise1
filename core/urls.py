@@ -12,7 +12,7 @@ urlpatterns = [
     path('login/',views.login_view, name='login'),
     path('logout/',views.logout_view, name='logout'),
     path('api/suggest/', views.suggest_recipes, name='suggest_recipes'),
-    path('api_recipe/<str:title>/', views.api_recipe_detail, name='api_recipe_detail'),
+    # path('api_recipe/<str:title>/', views.api_recipe_detail, name='api_recipe_detail'),
     path('suggest_recipes/', views.suggest_recipes, name='suggest_recipes'),
 
 ]

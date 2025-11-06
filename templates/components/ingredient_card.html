@@ -4,10 +4,17 @@
      data-category="{{ ingredient.category }}">
      
     <div class="relative">
-        <img src="{{ ingredient.image.url}}" 
-             alt="{{ ingredient.name }}" 
-             class="h-36 w-full object-cover transform group-hover:scale-[1.03] transition-transform duration-200" 
-             onerror="this.onerror=null;this.src='{% static 'images/empty.svg' %}'"/>
+        {% if ingredient.image %}
+            <img src="{{ ingredient.image.url }}" 
+                 alt="{{ ingredient.name }}" 
+                 class="h-36 w-full object-cover transform group-hover:scale-[1.03] transition-transform duration-200" 
+                 onerror="this.onerror=null;this.src='{% static 'images/empty.svg' %}'"/>
+        {% else %}
+            <img src="{% static 'images/empty.svg' %}" 
+                 alt="{{ ingredient.name }}" 
+                 class="h-36 w-full object-cover transform group-hover:scale-[1.03] transition-transform duration-200"/>
+        {% endif %}
+
         <input type="checkbox" 
                class="absolute top-3 left-3 h-5 w-5 rounded border-gray-300 text-brand focus:ring-brand ingredient-checkbox" />
     </div>
