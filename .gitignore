@@ -1,4 +1,16 @@
-.env
-__pycache__
+# Python cache
+__pycache__/
+*.pyc
+
+# Django database
 db.sqlite3
+
+# Environment variables
+.env
+venv/
+env/
+
+# IDEs
+.vscode/
+.idea/
 
